@@ -44,3 +44,42 @@ export interface CannyBoard {
   isPrivate: boolean;
   token: string;
 }
+
+export interface CannyCategory {
+  id: string;
+  name: string;
+  postCount?: number;
+  boardId?: string;
+}
+
+export interface CannyComment {
+  id: string;
+  author: {
+    id: string;
+    name: string;
+    email?: string;
+    isAdmin?: boolean;
+  };
+  value: string;
+  created: string;
+  internal?: boolean;
+  postId?: string;
+}
+
+export interface CannyUser {
+  id: string;
+  name: string;
+  email?: string;
+  isAdmin?: boolean;
+  created: string;
+  avatarURL?: string;
+  userID?: string;
+  url?: string;
+}
+
+export interface CannyTag {
+  id: string;
+  name: string;
+  postCount?: number;
+  url?: string;
+}

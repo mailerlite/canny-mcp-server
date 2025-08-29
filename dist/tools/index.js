@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updatePostTool = exports.createPostTool = exports.searchPostsTool = exports.getPostTool = exports.getPostsTool = exports.getBoardsTool = exports.tools = void 0;
+exports.getTagsTool = exports.getUsersTool = exports.getCommentsTool = exports.getCategoresTool = exports.updatePostTool = exports.createPostTool = exports.searchPostsTool = exports.getPostTool = exports.getPostsTool = exports.getBoardsTool = exports.tools = void 0;
 const boards_js_1 = require("./boards.js");
 Object.defineProperty(exports, "getBoardsTool", { enumerable: true, get: function () { return boards_js_1.getBoardsTool; } });
 const posts_js_1 = require("./posts.js");
@@ -9,6 +9,11 @@ Object.defineProperty(exports, "getPostTool", { enumerable: true, get: function 
 Object.defineProperty(exports, "searchPostsTool", { enumerable: true, get: function () { return posts_js_1.searchPostsTool; } });
 Object.defineProperty(exports, "createPostTool", { enumerable: true, get: function () { return posts_js_1.createPostTool; } });
 Object.defineProperty(exports, "updatePostTool", { enumerable: true, get: function () { return posts_js_1.updatePostTool; } });
+const extended_js_1 = require("./extended.js");
+Object.defineProperty(exports, "getCategoresTool", { enumerable: true, get: function () { return extended_js_1.getCategoresTool; } });
+Object.defineProperty(exports, "getCommentsTool", { enumerable: true, get: function () { return extended_js_1.getCommentsTool; } });
+Object.defineProperty(exports, "getUsersTool", { enumerable: true, get: function () { return extended_js_1.getUsersTool; } });
+Object.defineProperty(exports, "getTagsTool", { enumerable: true, get: function () { return extended_js_1.getTagsTool; } });
 /**
  * All available Canny MCP tools
  * Following CIQ's Excellence principle - comprehensive toolset for customer feedback management
@@ -22,5 +27,10 @@ exports.tools = [
     posts_js_1.searchPostsTool,
     posts_js_1.createPostTool,
     posts_js_1.updatePostTool,
+    // Extended functionality
+    extended_js_1.getCategoresTool,
+    extended_js_1.getCommentsTool,
+    extended_js_1.getUsersTool,
+    extended_js_1.getTagsTool,
 ];
 //# sourceMappingURL=index.js.map

@@ -80,10 +80,22 @@ class CannyClient {
      * Get all boards accessible to the API key
      */
     async getBoards() {
-        return this.makeRequest({
+        const response = await this.makeRequest({
             method: 'GET',
             url: '/boards/list',
         });
+        // Handle the nested response structure
+        if (response.data && response.data.boards) {
+            return {
+                data: response.data.boards,
+                status: response.status,
+            };
+        }
+        return {
+            data: [],
+            status: response.status,
+            error: response.error,
+        };
     }
     /**
      * Get posts from a specific board
@@ -149,4 +161,88 @@ class CannyClient {
     }
 }
 exports.CannyClient = CannyClient;
+/**
+ * Get categories from a specific board
+ */
+async;
+getCategories(boardId, string);
+Promise < types_js_1.CannyApiResponse < CannyCategory[] >> {
+    const: response = await this.makeRequest({
+        method: 'GET',
+        url: '/categories/list',
+        params: {
+            boardID: boardId,
+        },
+    }),
+    // Handle the nested response structure
+    if(response) { }, : .data && response.data.categories
+};
+{
+    return {
+        data: response.data.categories,
+        status: response.status,
+    };
+}
+return {
+    data: [],
+    status: response.status,
+    error: response.error,
+};
+/**
+ * Get comments from a specific post
+ */
+async;
+getComments(postId, string, options ?  : {
+    limit: number,
+    skip: number
+});
+Promise < types_js_1.CannyApiResponse < { comments: CannyComment[], hasMore: boolean } >> {
+    return: this.makeRequest({
+        method: 'GET',
+        url: '/comments/list',
+        params: {
+            postID: postId,
+            limit: options?.limit || 10,
+            skip: options?.skip || 0,
+        },
+    })
+};
+/**
+ * Get users from your Canny instance
+ */
+async;
+getUsers(options ?  : {
+    limit: number,
+    skip: number,
+    search: string
+});
+Promise < types_js_1.CannyApiResponse < { users: CannyUser[], hasMore: boolean } >> {
+    return: this.makeRequest({
+        method: 'GET',
+        url: '/users/list',
+        params: {
+            limit: options?.limit || 10,
+            skip: options?.skip || 0,
+            ...(options?.search && { search: options.search }),
+        },
+    })
+};
+/**
+ * Get tags from boards
+ */
+async;
+getTags(options ?  : {
+    boardId: string,
+    limit: number
+});
+Promise < types_js_1.CannyApiResponse < { tags: CannyTag[], hasMore: boolean } >> {
+    return: this.makeRequest({
+        method: 'GET',
+        url: '/tags/list',
+        params: {
+            limit: options?.limit || 20,
+            ...(options?.boardId && { boardID: options.boardId }),
+        },
+    })
+};
 //# sourceMappingURL=canny.js.map

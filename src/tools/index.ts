@@ -7,6 +7,12 @@ import {
   createPostTool, 
   updatePostTool 
 } from './posts.js';
+import {
+  getCategoresTool,
+  getCommentsTool,
+  getUsersTool,
+  getTagsTool,
+} from './extended.js';
 
 export interface Tool {
   name: string;
@@ -29,6 +35,12 @@ export const tools: Tool[] = [
   searchPostsTool,
   createPostTool,
   updatePostTool,
+
+  // Extended functionality
+  getCategoresTool,
+  getCommentsTool,
+  getUsersTool,
+  getTagsTool,
 ];
 
 // Export individual tools for testing
@@ -39,4 +51,8 @@ export {
   searchPostsTool,
   createPostTool,
   updatePostTool,
+  getCategoresTool,
+  getCommentsTool,
+  getUsersTool,
+  getTagsTool,
 };
