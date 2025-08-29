@@ -19,6 +19,8 @@ class CannyMCPServer {
   private cannyClient: CannyClient;
 
   constructor() {
+    console.error('🔧 Constructing CannyMCPServer...');
+    
     this.server = new Server(
       {
         name: 'canny-mcp-server',
@@ -30,15 +32,24 @@ class CannyMCPServer {
         },
       }
     );
+    console.error('✅ MCP Server instance created');
 
     // Validate environment and initialize client
+    console.error('🔍 Validating environment...');
     const validation = validateEnvironment();
     if (!validation.isValid) {
+      console.error('❌ Environment validation failed:', validation.errors);
       throw new Error(`Configuration error: ${validation.errors.join(', ')}`);
     }
+    console.error('✅ Environment validation passed');
 
+    console.error('🔧 Initializing Canny client...');
     this.cannyClient = new CannyClient(CONFIG.apiKey!, CONFIG.baseUrl);
+    console.error('✅ Canny client initialized');
+    
+    console.error('🔧 Setting up tool handlers...');
     this.setupToolHandlers();
+    console.error('✅ Tool handlers configured');
   }
 
   private setupToolHandlers(): void {
@@ -82,24 +93,32 @@ class CannyMCPServer {
   }
 
   async run(): Promise<void> {
+    console.error('🔧 Setting up transport...');
     const transport = new StdioServerTransport();
+    console.error('✅ Transport created');
+    
+    console.error('🔗 Connecting server to transport...');
     await this.server.connect(transport);
-    console.error('Canny MCP Server running on stdio');
+    console.error('🚀 Canny MCP Server running on stdio');
   }
 }
 
 // Start the server
 async function main(): Promise<void> {
   try {
+    console.error('🚀 Starting Canny MCP Server...');
     const server = new CannyMCPServer();
+    console.error('✅ Server instance created successfully');
     await server.run();
+    console.error('✅ Server.run() completed');
   } catch (error) {
-    console.error('Failed to start Canny MCP Server:', error);
+    console.error('💥 Failed to start Canny MCP Server:', error);
+    console.error('📚 Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
     process.exit(1);
   }
 }
 
-if (typeof require !== 'undefined' && require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch((error: Error) => {
     console.error('Unhandled error:', error);
     process.exit(1);
