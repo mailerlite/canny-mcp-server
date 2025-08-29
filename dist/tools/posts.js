@@ -1,46 +1,43 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.updatePostTool = exports.createPostTool = exports.searchPostsTool = exports.getPostTool = exports.getPostsTool = void 0;
-const zod_1 = require("zod");
-const validation_js_1 = require("../utils/validation.js");
-const GetPostsSchema = zod_1.z.object({
-    boardId: zod_1.z.string().min(1, 'Board ID is required'),
-    limit: zod_1.z.number().min(1).max(50).optional().default(10),
-    skip: zod_1.z.number().min(0).optional().default(0),
-    status: zod_1.z.enum(['open', 'under review', 'planned', 'in progress', 'complete', 'closed']).optional(),
-    search: zod_1.z.string().optional(),
-    sort: zod_1.z.enum(['newest', 'oldest', 'relevance', 'trending']).optional(),
+import { z } from 'zod';
+import { validateToolInput } from '../utils/validation.js';
+const GetPostsSchema = z.object({
+    boardId: z.string().min(1, 'Board ID is required'),
+    limit: z.number().min(1).max(50).optional().default(10),
+    skip: z.number().min(0).optional().default(0),
+    status: z.enum(['open', 'under review', 'planned', 'in progress', 'complete', 'closed']).optional(),
+    search: z.string().optional(),
+    sort: z.enum(['newest', 'oldest', 'relevance', 'trending']).optional(),
 });
-const GetPostSchema = zod_1.z.object({
-    postId: zod_1.z.string().min(1, 'Post ID is required'),
+const GetPostSchema = z.object({
+    postId: z.string().min(1, 'Post ID is required'),
 });
-const SearchPostsSchema = zod_1.z.object({
-    query: zod_1.z.string().min(1, 'Search query is required'),
-    boardIds: zod_1.z.array(zod_1.z.string()).optional(),
-    limit: zod_1.z.number().min(1).max(50).optional().default(20),
-    status: zod_1.z.enum(['open', 'under review', 'planned', 'in progress', 'complete', 'closed']).optional(),
+const SearchPostsSchema = z.object({
+    query: z.string().min(1, 'Search query is required'),
+    boardIds: z.array(z.string()).optional(),
+    limit: z.number().min(1).max(50).optional().default(20),
+    status: z.enum(['open', 'under review', 'planned', 'in progress', 'complete', 'closed']).optional(),
 });
-const CreatePostSchema = zod_1.z.object({
-    authorId: zod_1.z.string().min(1, 'Author ID is required'),
-    boardId: zod_1.z.string().min(1, 'Board ID is required'),
-    title: zod_1.z.string().min(1, 'Title is required'),
-    details: zod_1.z.string().optional(),
-    categoryId: zod_1.z.string().optional(),
-    customFields: zod_1.z.record(zod_1.z.any()).optional(),
+const CreatePostSchema = z.object({
+    authorId: z.string().min(1, 'Author ID is required'),
+    boardId: z.string().min(1, 'Board ID is required'),
+    title: z.string().min(1, 'Title is required'),
+    details: z.string().optional(),
+    categoryId: z.string().optional(),
+    customFields: z.record(z.any()).optional(),
 });
-const UpdatePostSchema = zod_1.z.object({
-    postId: zod_1.z.string().min(1, 'Post ID is required'),
-    title: zod_1.z.string().optional(),
-    details: zod_1.z.string().optional(),
-    categoryId: zod_1.z.string().optional(),
-    customFields: zod_1.z.record(zod_1.z.any()).optional(),
-    status: zod_1.z.enum(['open', 'under review', 'planned', 'in progress', 'complete', 'closed']).optional(),
+const UpdatePostSchema = z.object({
+    postId: z.string().min(1, 'Post ID is required'),
+    title: z.string().optional(),
+    details: z.string().optional(),
+    categoryId: z.string().optional(),
+    customFields: z.record(z.any()).optional(),
+    status: z.enum(['open', 'under review', 'planned', 'in progress', 'complete', 'closed']).optional(),
 });
 /**
  * Tool to get posts from a specific board
  * Customer-Centric: Provides detailed post information with filtering options
  */
-exports.getPostsTool = {
+export const getPostsTool = {
     name: 'get_posts',
     description: 'Get posts from a specific Canny board with optional filtering',
     inputSchema: {
@@ -65,7 +62,7 @@ exports.getPostsTool = {
         additionalProperties: false,
     },
     handler: async (args, client) => {
-        const { boardId, limit, skip, status, search, sort } = (0, validation_js_1.validateToolInput)(args, GetPostsSchema);
+        const { boardId, limit, skip, status, search, sort } = validateToolInput(args, GetPostsSchema);
         const response = await client.getPosts(boardId, { limit, skip, status, search, sort });
         if (response.error) {
             throw new Error(`Failed to fetch posts: ${response.error}`);
@@ -99,7 +96,7 @@ exports.getPostsTool = {
  * Tool to get a specific post by ID
  * Customer-Centric: Provides complete post details for thorough analysis
  */
-exports.getPostTool = {
+export const getPostTool = {
     name: 'get_post',
     description: 'Get detailed information about a specific Canny post',
     inputSchema: {
@@ -111,7 +108,7 @@ exports.getPostTool = {
         additionalProperties: false,
     },
     handler: async (args, client) => {
-        const { postId } = (0, validation_js_1.validateToolInput)(args, GetPostSchema);
+        const { postId } = validateToolInput(args, GetPostSchema);
         const response = await client.getPost(postId);
         if (response.error) {
             throw new Error(`Failed to fetch post: ${response.error}`);
@@ -138,7 +135,7 @@ exports.getPostTool = {
  * Tool to search posts across boards
  * Efficient: Searches across multiple boards with a single query
  */
-exports.searchPostsTool = {
+export const searchPostsTool = {
     name: 'search_posts',
     description: 'Search for posts across Canny boards',
     inputSchema: {
@@ -161,7 +158,7 @@ exports.searchPostsTool = {
         additionalProperties: false,
     },
     handler: async (args, client) => {
-        const { query, boardIds, limit, status } = (0, validation_js_1.validateToolInput)(args, SearchPostsSchema);
+        const { query, boardIds, limit, status } = validateToolInput(args, SearchPostsSchema);
         const response = await client.searchPosts(query, { boardIDs: boardIds, limit, status });
         if (response.error) {
             throw new Error(`Failed to search posts: ${response.error}`);
@@ -193,7 +190,7 @@ exports.searchPostsTool = {
  * Tool to create a new post
  * Customer-Centric: Enables easy creation of feedback posts
  */
-exports.createPostTool = {
+export const createPostTool = {
     name: 'create_post',
     description: 'Create a new post in a Canny board',
     inputSchema: {
@@ -214,7 +211,7 @@ exports.createPostTool = {
         additionalProperties: false,
     },
     handler: async (args, client) => {
-        const { authorId, boardId, title, details, categoryId, customFields } = (0, validation_js_1.validateToolInput)(args, CreatePostSchema);
+        const { authorId, boardId, title, details, categoryId, customFields } = validateToolInput(args, CreatePostSchema);
         const response = await client.createPost({
             authorID: authorId,
             boardID: boardId,
@@ -243,7 +240,7 @@ exports.createPostTool = {
  * Tool to update an existing post
  * Dedicated: Committed to maintaining post accuracy and status
  */
-exports.updatePostTool = {
+export const updatePostTool = {
     name: 'update_post',
     description: 'Update an existing Canny post',
     inputSchema: {
@@ -268,7 +265,7 @@ exports.updatePostTool = {
         additionalProperties: false,
     },
     handler: async (args, client) => {
-        const { postId, title, details, categoryId, customFields, status } = (0, validation_js_1.validateToolInput)(args, UpdatePostSchema);
+        const { postId, title, details, categoryId, customFields, status } = validateToolInput(args, UpdatePostSchema);
         const response = await client.updatePost(postId, {
             title,
             details,

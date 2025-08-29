@@ -1,11 +1,8 @@
-"use strict";
 /**
  * Configuration management for Canny MCP Server
  * Handles environment variables and validates required settings
  */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.OPTIONAL_ENV_VARS = exports.REQUIRED_ENV_VARS = exports.CONFIG = void 0;
-exports.CONFIG = {
+export const CONFIG = {
     apiKey: process.env.CANNY_API_KEY,
     baseUrl: process.env.CANNY_BASE_URL || 'https://canny.io/api/v1',
     timeout: parseInt(process.env.CANNY_TIMEOUT || '30000', 10),
@@ -15,8 +12,8 @@ exports.CONFIG = {
         burstLimit: parseInt(process.env.CANNY_RATE_LIMIT_BURST || '10', 10),
     },
 };
-exports.REQUIRED_ENV_VARS = ['CANNY_API_KEY'];
-exports.OPTIONAL_ENV_VARS = [
+export const REQUIRED_ENV_VARS = ['CANNY_API_KEY'];
+export const OPTIONAL_ENV_VARS = [
     'CANNY_BASE_URL',
     'CANNY_TIMEOUT',
     'CANNY_MAX_RETRIES',

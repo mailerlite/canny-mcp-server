@@ -1,18 +1,8 @@
-"use strict";
 /**
  * Utility functions for the Canny MCP Server
  * Following CIQ's Efficient principle - maximize existing resources
  */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.logger = exports.CannyError = void 0;
-exports.formatDate = formatDate;
-exports.truncateText = truncateText;
-exports.formatPostStatus = formatPostStatus;
-exports.formatPostSummary = formatPostSummary;
-exports.validateBoardId = validateBoardId;
-exports.validatePostId = validatePostId;
-exports.handleApiError = handleApiError;
-function formatDate(dateString) {
+export function formatDate(dateString) {
     try {
         return new Date(dateString).toLocaleString();
     }
@@ -20,19 +10,19 @@ function formatDate(dateString) {
         return dateString;
     }
 }
-function truncateText(text, maxLength = 200) {
+export function truncateText(text, maxLength = 200) {
     if (!text)
         return '';
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
 }
-function formatPostStatus(status) {
+export function formatPostStatus(status) {
     // Capitalize and format status for better readability
     return status
         .split(' ')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
 }
-function formatPostSummary(post) {
+export function formatPostSummary(post) {
     return `**${post.title}** (ID: ${post.id})\n` +
         `Status: ${formatPostStatus(post.status)} | Votes: ${post.votes}\n` +
         `Author: ${post.author?.name || 'Unknown'}\n` +
@@ -40,13 +30,13 @@ function formatPostSummary(post) {
         `${post.details ? `Details: ${truncateText(post.details)}\n` : ''}` +
         `URL: ${post.url}`;
 }
-function validateBoardId(boardId) {
+export function validateBoardId(boardId) {
     return typeof boardId === 'string' && boardId.trim().length > 0;
 }
-function validatePostId(postId) {
+export function validatePostId(postId) {
     return typeof postId === 'string' && postId.trim().length > 0;
 }
-class CannyError extends Error {
+export class CannyError extends Error {
     statusCode;
     cause;
     constructor(message, statusCode, cause) {
@@ -59,8 +49,7 @@ class CannyError extends Error {
         }
     }
 }
-exports.CannyError = CannyError;
-function handleApiError(error, context) {
+export function handleApiError(error, context) {
     if (error instanceof CannyError) {
         throw error;
     }
@@ -71,7 +60,7 @@ function handleApiError(error, context) {
 /**
  * Logger utility following CIQ's transparency principle
  */
-exports.logger = {
+export const logger = {
     info: (message, data) => {
         console.error(`[INFO] ${message}`, data ? JSON.stringify(data, null, 2) : '');
     },

@@ -1,27 +1,21 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.CannyClient = void 0;
-const axios_1 = __importDefault(require("axios"));
-const config_js_1 = require("../config/config.js");
+import axios from 'axios';
+import { CONFIG } from '../config/config.js';
 /**
  * Canny API Client
  * Implements Customer-Centric approach by providing reliable API access
  * Following Efficiency principle by implementing proper error handling and retries
  */
-class CannyClient {
+export class CannyClient {
     apiKey;
     baseUrl;
     client;
     rateLimitTracker = new Map();
-    constructor(apiKey, baseUrl = config_js_1.CONFIG.baseUrl) {
+    constructor(apiKey, baseUrl = CONFIG.baseUrl) {
         this.apiKey = apiKey;
         this.baseUrl = baseUrl;
-        this.client = axios_1.default.create({
+        this.client = axios.create({
             baseURL: this.baseUrl,
-            timeout: config_js_1.CONFIG.timeout,
+            timeout: CONFIG.timeout,
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -49,7 +43,7 @@ class CannyClient {
         const requests = this.rateLimitTracker.get(endpoint);
         // Remove old requests outside the window
         const validRequests = requests.filter(time => now - time < windowMs);
-        if (validRequests.length >= config_js_1.CONFIG.rateLimit.requestsPerMinute) {
+        if (validRequests.length >= CONFIG.rateLimit.requestsPerMinute) {
             throw new Error(`Rate limit exceeded for endpoint: ${endpoint}`);
         }
         validRequests.push(now);
@@ -64,7 +58,7 @@ class CannyClient {
             };
         }
         catch (error) {
-            if (axios_1.default.isAxiosError(error)) {
+            if (axios.isAxiosError(error)) {
                 return {
                     error: error.response?.data?.error || error.message,
                     status: error.response?.status || 500,
@@ -225,5 +219,4 @@ class CannyClient {
         });
     }
 }
-exports.CannyClient = CannyClient;
 //# sourceMappingURL=canny.js.map

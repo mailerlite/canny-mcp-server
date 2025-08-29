@@ -1,29 +1,26 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.getTagsTool = exports.getUsersTool = exports.getCommentsTool = exports.getCategoresTool = void 0;
-const zod_1 = require("zod");
-const validation_js_1 = require("../utils/validation.js");
-const GetCategoriesSchema = zod_1.z.object({
-    boardId: zod_1.z.string().min(1, 'Board ID is required'),
+import { z } from 'zod';
+import { validateToolInput } from '../utils/validation.js';
+const GetCategoriesSchema = z.object({
+    boardId: z.string().min(1, 'Board ID is required'),
 });
-const GetCommentsSchema = zod_1.z.object({
-    postId: zod_1.z.string().min(1, 'Post ID is required'),
-    limit: zod_1.z.number().min(1).max(50).optional().default(10),
-    skip: zod_1.z.number().min(0).optional().default(0),
+const GetCommentsSchema = z.object({
+    postId: z.string().min(1, 'Post ID is required'),
+    limit: z.number().min(1).max(50).optional().default(10),
+    skip: z.number().min(0).optional().default(0),
 });
-const GetUsersSchema = zod_1.z.object({
-    limit: zod_1.z.number().min(1).max(50).optional().default(10),
-    skip: zod_1.z.number().min(0).optional().default(0),
-    search: zod_1.z.string().optional(),
+const GetUsersSchema = z.object({
+    limit: z.number().min(1).max(50).optional().default(10),
+    skip: z.number().min(0).optional().default(0),
+    search: z.string().optional(),
 });
-const GetTagsSchema = zod_1.z.object({
-    boardId: zod_1.z.string().optional(),
-    limit: zod_1.z.number().min(1).max(50).optional().default(20),
+const GetTagsSchema = z.object({
+    boardId: z.string().optional(),
+    limit: z.number().min(1).max(50).optional().default(20),
 });
 /**
  * Tool to get categories from a specific board
  */
-exports.getCategoresTool = {
+export const getCategoresTool = {
     name: 'get_categories',
     description: 'Get all categories from a specific Canny board',
     inputSchema: {
@@ -35,7 +32,7 @@ exports.getCategoresTool = {
         additionalProperties: false,
     },
     handler: async (args, client) => {
-        const { boardId } = (0, validation_js_1.validateToolInput)(args, GetCategoriesSchema);
+        const { boardId } = validateToolInput(args, GetCategoriesSchema);
         const response = await client.getCategories(boardId);
         if (response.error) {
             throw new Error(`Failed to fetch categories: ${response.error}`);
@@ -57,7 +54,7 @@ exports.getCategoresTool = {
 /**
  * Tool to get comments from a specific post
  */
-exports.getCommentsTool = {
+export const getCommentsTool = {
     name: 'get_comments',
     description: 'Get comments from a specific Canny post',
     inputSchema: {
@@ -71,7 +68,7 @@ exports.getCommentsTool = {
         additionalProperties: false,
     },
     handler: async (args, client) => {
-        const { postId, limit, skip } = (0, validation_js_1.validateToolInput)(args, GetCommentsSchema);
+        const { postId, limit, skip } = validateToolInput(args, GetCommentsSchema);
         const response = await client.getComments(postId, { limit, skip });
         if (response.error) {
             throw new Error(`Failed to fetch comments: ${response.error}`);
@@ -95,7 +92,7 @@ exports.getCommentsTool = {
 /**
  * Tool to get users/authors from Canny
  */
-exports.getUsersTool = {
+export const getUsersTool = {
     name: 'get_users',
     description: 'Get users/authors from your Canny instance',
     inputSchema: {
@@ -108,7 +105,7 @@ exports.getUsersTool = {
         additionalProperties: false,
     },
     handler: async (args, client) => {
-        const { limit, skip, search } = (0, validation_js_1.validateToolInput)(args, GetUsersSchema);
+        const { limit, skip, search } = validateToolInput(args, GetUsersSchema);
         const response = await client.getUsers({ limit, skip, search });
         if (response.error) {
             throw new Error(`Failed to fetch users: ${response.error}`);
@@ -133,7 +130,7 @@ exports.getUsersTool = {
 /**
  * Tool to get tags from boards
  */
-exports.getTagsTool = {
+export const getTagsTool = {
     name: 'get_tags',
     description: 'Get all tags from Canny boards (optionally filtered by board)',
     inputSchema: {
@@ -145,7 +142,7 @@ exports.getTagsTool = {
         additionalProperties: false,
     },
     handler: async (args, client) => {
-        const { boardId, limit } = (0, validation_js_1.validateToolInput)(args, GetTagsSchema);
+        const { boardId, limit } = validateToolInput(args, GetTagsSchema);
         const response = await client.getTags({ boardId, limit });
         if (response.error) {
             throw new Error(`Failed to fetch tags: ${response.error}`);

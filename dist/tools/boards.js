@@ -1,14 +1,11 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.getBoardsTool = void 0;
-const zod_1 = require("zod");
-const validation_js_1 = require("../utils/validation.js");
-const GetBoardsSchema = zod_1.z.object({});
+import { z } from 'zod';
+import { validateToolInput } from '../utils/validation.js';
+const GetBoardsSchema = z.object({});
 /**
  * Tool to list all accessible Canny boards
  * Customer-Centric: Provides clear overview of available boards
  */
-exports.getBoardsTool = {
+export const getBoardsTool = {
     name: 'get_boards',
     description: 'List all Canny boards accessible with the current API key',
     inputSchema: {
@@ -17,7 +14,7 @@ exports.getBoardsTool = {
         additionalProperties: false,
     },
     handler: async (args, client) => {
-        (0, validation_js_1.validateToolInput)(args, GetBoardsSchema);
+        validateToolInput(args, GetBoardsSchema);
         const response = await client.getBoards();
         if (response.error) {
             throw new Error(`Failed to fetch boards: ${response.error}`);
