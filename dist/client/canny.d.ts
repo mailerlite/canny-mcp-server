@@ -1,4 +1,4 @@
-import { CannyApiResponse, CannyPost, CannyBoard } from './types.js';
+import { CannyApiResponse, CannyPost, CannyBoard, CannyCategory, CannyComment, CannyUser, CannyTag } from './types.js';
 /**
  * Canny API Client
  * Implements Customer-Centric approach by providing reliable API access
@@ -64,6 +64,41 @@ export declare class CannyClient {
     }): Promise<CannyApiResponse<{
         posts: CannyPost[];
         hasMore: boolean;
+    }>>;
+    /**
+     * Get categories from a specific board
+     */
+    getCategories(boardId: string): Promise<CannyApiResponse<CannyCategory[]>>;
+    /**
+     * Get comments from a specific post
+     */
+    getComments(postId: string, options?: {
+        limit?: number;
+        skip?: number;
+    }): Promise<CannyApiResponse<{
+        comments: CannyComment[];
+        hasMore: boolean;
+    }>>;
+    /**
+     * Get users from your Canny instance
+     */
+    getUsers(options?: {
+        limit?: number;
+        skip?: number;
+        search?: string;
+    }): Promise<CannyApiResponse<{
+        users: CannyUser[];
+        hasMore: boolean;
+    }>>;
+    /**
+     * Get tags from boards
+     */
+    getTags(options?: {
+        boardId?: string;
+        limit?: number;
+    }): Promise<CannyApiResponse<{
+        tags: CannyTag[];
+        hasMore?: boolean;
     }>>;
 }
 //# sourceMappingURL=canny.d.ts.map

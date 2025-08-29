@@ -3,7 +3,11 @@ import { CONFIG } from '../config/config.js';
 import { 
   CannyApiResponse, 
   CannyPost, 
-  CannyBoard 
+  CannyBoard,
+  CannyCategory,
+  CannyComment,
+  CannyUser,
+  CannyTag,
 } from './types.js';
 
 /**
@@ -198,7 +202,7 @@ export class CannyClient {
       },
     });
   }
-}
+
   /**
    * Get categories from a specific board
    */
@@ -279,3 +283,4 @@ export class CannyClient {
       },
     });
   }
+}
