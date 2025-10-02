@@ -1,5 +1,5 @@
 {
-  "name": "canny-mcp-server",
+  "name": "@mailerlite/canny-mcp-server",
   "version": "1.0.0",
   "type": "module",
   "description": "MCP server integration for Canny.io customer feedback management",
@@ -45,5 +45,12 @@
   },
   "engines": {
     "node": ">=18.0.0"
-  }
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ]
 }
