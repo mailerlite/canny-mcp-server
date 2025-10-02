@@ -90,11 +90,10 @@ async function main() {
         process.exit(1);
     }
 }
-if (import.meta.url === `file://${process.argv[1]}`) {
-    main().catch((error) => {
-        console.error('Unhandled error:', error);
-        process.exit(1);
-    });
-}
+// Execute main when run directly (including via npx)
+main().catch((error) => {
+    console.error('Unhandled error:', error);
+    process.exit(1);
+});
 export { CannyMCPServer };
 //# sourceMappingURL=server.js.map

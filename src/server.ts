@@ -118,11 +118,10 @@ async function main(): Promise<void> {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch((error: Error) => {
-    console.error('Unhandled error:', error);
-    process.exit(1);
-  });
-}
+// Execute main when run directly (including via npx)
+main().catch((error: Error) => {
+  console.error('Unhandled error:', error);
+  process.exit(1);
+});
 
 export { CannyMCPServer };
