@@ -5,7 +5,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # Distribution files (optional - include if you want others to use without building)
-# dist/
+dist/
 
 # Environment variables
 .env

@@ -63,11 +63,17 @@ A Model Context Protocol (MCP) server that integrates with Canny.io for customer
 - `get_boards`: List all accessible Canny boards
 
 ### Post Tools
-- `get_posts`: Get posts from a specific board with filtering options
-- `get_post`: Get detailed information about a specific post
-- `search_posts`: Search for posts across boards
-- `create_post`: Create a new post in a board
-- `update_post`: Update an existing post
+- `get_posts`: Get posts from a specific board with filtering options (returns structured JSON)
+- `get_post`: Get detailed information about a specific post (returns normalized JSON)
+- `search_posts`: Search for posts across boards with pagination metadata
+- `create_post`: Create a new post in a board (returns created post payload)
+- `update_post`: Update an existing post (returns updated post payload)
+
+### Extended Tools
+- `get_categories`: List categories for a board
+- `get_comments`: List comments for a post
+- `get_users`: List users with optional search & pagination
+- `get_tags`: List tags optionally filtered by board
 
 ## Usage Examples
 

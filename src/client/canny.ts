@@ -1,13 +1,14 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
 import { CONFIG } from '../config/config.js';
-import { 
-  CannyApiResponse, 
-  CannyPost, 
+import {
+  CannyApiResponse,
   CannyBoard,
   CannyCategory,
-  CannyComment,
-  CannyUser,
-  CannyTag,
+  CannyListCommentsResponse,
+  CannyListPostsResponse,
+  CannyListTagsResponse,
+  CannyListUsersResponse,
+  CannyPost
 } from './types.js';
 
 /**
@@ -40,7 +41,7 @@ export class CannyClient {
 
         // Check rate limiting
         this.checkRateLimit(config.url || '');
-        
+
         return config;
       },
       (error) => Promise.reject(error)
@@ -50,20 +51,20 @@ export class CannyClient {
   private checkRateLimit(endpoint: string): void {
     const now = Date.now();
     const windowMs = 60 * 1000; // 1 minute window
-    
+
     if (!this.rateLimitTracker.has(endpoint)) {
       this.rateLimitTracker.set(endpoint, []);
     }
-    
+
     const requests = this.rateLimitTracker.get(endpoint)!;
-    
+
     // Remove old requests outside the window
     const validRequests = requests.filter(time => now - time < windowMs);
-    
+
     if (validRequests.length >= CONFIG.rateLimit.requestsPerMinute) {
       throw new Error(`Rate limit exceeded for endpoint: ${endpoint}`);
     }
-    
+
     validRequests.push(now);
     this.rateLimitTracker.set(endpoint, validRequests);
   }
@@ -77,9 +78,10 @@ export class CannyClient {
       };
     } catch (error) {
       if (axios.isAxiosError(error)) {
+        const axiosError = error as AxiosError<{ error?: string; message?: string }>;
         return {
-          error: error.response?.data?.error || error.message,
-          status: error.response?.status || 500,
+          error: axiosError.response?.data?.error || axiosError.response?.data?.message || axiosError.message,
+          status: axiosError.response?.status || 500,
         };
       }
       return {
@@ -93,13 +95,12 @@ export class CannyClient {
    * Get all boards accessible to the API key
    */
   async getBoards(): Promise<CannyApiResponse<CannyBoard[]>> {
-    const response = await this.makeRequest<{ boards: CannyBoard[] }>({
-      method: 'GET',
+    const response = await this.makeRequest<{ boards?: CannyBoard[] }>({
+      method: 'POST',
       url: '/boards/list',
     });
 
-    // Handle the nested response structure
-    if (response.data && response.data.boards) {
+    if (response.data?.boards) {
       return {
         data: response.data.boards,
         status: response.status,
@@ -116,23 +117,30 @@ export class CannyClient {
   /**
    * Get posts from a specific board
    */
-  async getPosts(boardId: string, options?: {
-    limit?: number;
-    skip?: number;
-    status?: string;
-    search?: string;
-    sort?: 'newest' | 'oldest' | 'relevance' | 'trending';
-  }): Promise<CannyApiResponse<{ posts: CannyPost[]; hasMore: boolean }>> {
-    return this.makeRequest<{ posts: CannyPost[]; hasMore: boolean }>({
-      method: 'GET',
+  async getPosts(
+    boardId: string,
+    options?: {
+      limit?: number;
+      skip?: number;
+      status?: string;
+      search?: string;
+      sort?: 'newest' | 'oldest' | 'relevance' | 'trending';
+      tagIDs?: string[];
+      categoryIDs?: string[];
+    }
+  ): Promise<CannyApiResponse<CannyListPostsResponse>> {
+    return this.makeRequest<CannyListPostsResponse>({
+      method: 'POST',
       url: '/posts/list',
-      params: {
+      data: {
         boardID: boardId,
-        limit: options?.limit || 10,
-        skip: options?.skip || 0,
-        ...(options?.status && { status: options.status }),
-        ...(options?.search && { search: options.search }),
-        ...(options?.sort && { sort: options.sort }),
+        limit: options?.limit,
+        skip: options?.skip,
+        status: options?.status,
+        search: options?.search,
+        sort: options?.sort,
+        tagIDs: options?.tagIDs,
+        categoryIDs: options?.categoryIDs,
       },
     });
   }
@@ -142,9 +150,9 @@ export class CannyClient {
    */
   async getPost(postId: string): Promise<CannyApiResponse<CannyPost>> {
     return this.makeRequest<CannyPost>({
-      method: 'GET',
+      method: 'POST',
       url: '/posts/retrieve',
-      params: { id: postId },
+      data: { id: postId },
     });
   }
 
@@ -157,7 +165,7 @@ export class CannyClient {
     title: string;
     details?: string;
     categoryID?: string;
-    customFields?: Record<string, any>;
+    customFields?: Record<string, unknown>;
   }): Promise<CannyApiResponse<CannyPost>> {
     return this.makeRequest<CannyPost>({
       method: 'POST',
@@ -178,7 +186,7 @@ export class CannyClient {
   }): Promise<CannyApiResponse<CannyPost>> {
     return this.makeRequest<CannyPost>({
       method: 'POST',
-      url: '/posts/change_status',
+      url: '/posts/update',
       data: { postID: postId, ...data },
     });
   }
@@ -186,19 +194,24 @@ export class CannyClient {
   /**
    * Search posts across all accessible boards
    */
-  async searchPosts(query: string, options?: {
-    boardIDs?: string[];
-    limit?: number;
-    status?: string;
-  }): Promise<CannyApiResponse<{ posts: CannyPost[]; hasMore: boolean }>> {
-    return this.makeRequest<{ posts: CannyPost[]; hasMore: boolean }>({
-      method: 'GET',
+  async searchPosts(
+    query: string,
+    options?: {
+      boardIDs?: string[];
+      limit?: number;
+      status?: string;
+      skip?: number;
+    }
+  ): Promise<CannyApiResponse<CannyListPostsResponse>> {
+    return this.makeRequest<CannyListPostsResponse>({
+      method: 'POST',
       url: '/posts/list',
-      params: {
+      data: {
         search: query,
-        limit: options?.limit || 20,
-        ...(options?.boardIDs && { boardIDs: options.boardIDs.join(',') }),
-        ...(options?.status && { status: options.status }),
+        boardIDs: options?.boardIDs,
+        limit: options?.limit,
+        status: options?.status,
+        skip: options?.skip,
       },
     });
   }
@@ -207,16 +220,15 @@ export class CannyClient {
    * Get categories from a specific board
    */
   async getCategories(boardId: string): Promise<CannyApiResponse<CannyCategory[]>> {
-    const response = await this.makeRequest<{ categories: CannyCategory[] }>({
-      method: 'GET',
+    const response = await this.makeRequest<{ categories?: CannyCategory[] }>({
+      method: 'POST',
       url: '/categories/list',
-      params: {
+      data: {
         boardID: boardId,
       },
     });
 
-    // Handle the nested response structure
-    if (response.data && response.data.categories) {
+    if (response.data?.categories) {
       return {
         data: response.data.categories,
         status: response.status,
@@ -233,17 +245,20 @@ export class CannyClient {
   /**
    * Get comments from a specific post
    */
-  async getComments(postId: string, options?: {
-    limit?: number;
-    skip?: number;
-  }): Promise<CannyApiResponse<{ comments: CannyComment[]; hasMore: boolean }>> {
-    return this.makeRequest<{ comments: CannyComment[]; hasMore: boolean }>({
-      method: 'GET',
+  async getComments(
+    postId: string,
+    options?: {
+      limit?: number;
+      skip?: number;
+    }
+  ): Promise<CannyApiResponse<CannyListCommentsResponse>> {
+    return this.makeRequest<CannyListCommentsResponse>({
+      method: 'POST',
       url: '/comments/list',
-      params: {
+      data: {
         postID: postId,
-        limit: options?.limit || 10,
-        skip: options?.skip || 0,
+        limit: options?.limit,
+        skip: options?.skip,
       },
     });
   }
@@ -251,18 +266,20 @@ export class CannyClient {
   /**
    * Get users from your Canny instance
    */
-  async getUsers(options?: {
-    limit?: number;
-    skip?: number;
-    search?: string;
-  }): Promise<CannyApiResponse<{ users: CannyUser[]; hasMore: boolean }>> {
-    return this.makeRequest<{ users: CannyUser[]; hasMore: boolean }>({
-      method: 'GET',
+  async getUsers(
+    options?: {
+      limit?: number;
+      skip?: number;
+      search?: string;
+    }
+  ): Promise<CannyApiResponse<CannyListUsersResponse>> {
+    return this.makeRequest<CannyListUsersResponse>({
+      method: 'POST',
       url: '/users/list',
-      params: {
-        limit: options?.limit || 10,
-        skip: options?.skip || 0,
-        ...(options?.search && { search: options.search }),
+      data: {
+        limit: options?.limit,
+        skip: options?.skip,
+        search: options?.search,
       },
     });
   }
@@ -270,16 +287,18 @@ export class CannyClient {
   /**
    * Get tags from boards
    */
-  async getTags(options?: {
-    boardId?: string;
-    limit?: number;
-  }): Promise<CannyApiResponse<{ tags: CannyTag[]; hasMore?: boolean }>> {
-    return this.makeRequest<{ tags: CannyTag[]; hasMore?: boolean }>({
-      method: 'GET',
+  async getTags(
+    options?: {
+      boardId?: string;
+      limit?: number;
+    }
+  ): Promise<CannyApiResponse<CannyListTagsResponse>> {
+    return this.makeRequest<CannyListTagsResponse>({
+      method: 'POST',
       url: '/tags/list',
-      params: {
-        limit: options?.limit || 20,
-        ...(options?.boardId && { boardID: options.boardId }),
+      data: {
+        boardID: options?.boardId,
+        limit: options?.limit,
       },
     });
   }

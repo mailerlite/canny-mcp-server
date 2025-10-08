@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { CannyClient } from '../client/canny.js';
+import { buildError, buildSuccess } from '../utils/response.js';
 import { validateToolInput } from '../utils/validation.js';
 
 const GetCategoriesSchema = z.object({
@@ -44,29 +45,27 @@ export const getCategoresTool = {
   },
   handler: async (args: unknown, client: CannyClient) => {
     const { boardId } = validateToolInput<GetCategoriesInput>(args, GetCategoriesSchema);
-    
+
     const response = await client.getCategories(boardId);
-    
+
     if (response.error) {
-      throw new Error(`Failed to fetch categories: ${response.error}`);
+      return buildError('API_ERROR', `Failed to fetch categories: ${response.error}`);
     }
 
-    if (!response.data || response.data.length === 0) {
-      return `No categories found for board ${boardId}.`;
-    }
-
-    const categories = response.data.map(category => ({
+    const categories = (response.data ?? []).map(category => ({
       id: category.id,
       name: category.name,
-      postCount: category.postCount || 0,
+      postCount: category.postCount ?? 0,
+      parentId: (category as any).parentID ?? null,
+      createdAt: category.created ?? null,
+      url: category.board?.url ?? null,
     }));
 
-    return `Found ${categories.length} category(ies) in board:\n\n${categories
-      .map(category => 
-        `**${category.name}** (ID: ${category.id})\n` +
-        `  Posts: ${category.postCount}\n`
-      )
-      .join('\n')}`;
+    return buildSuccess({
+      boardId,
+      categories,
+      count: categories.length,
+    });
   },
 };
 
@@ -88,31 +87,38 @@ export const getCommentsTool = {
   },
   handler: async (args: unknown, client: CannyClient) => {
     const { postId, limit, skip } = validateToolInput<GetCommentsInput>(args, GetCommentsSchema);
-    
+
     const response = await client.getComments(postId, { limit, skip });
-    
+
     if (response.error) {
-      throw new Error(`Failed to fetch comments: ${response.error}`);
+      return buildError('API_ERROR', `Failed to fetch comments: ${response.error}`);
     }
 
-    if (!response.data?.comments || response.data.comments.length === 0) {
-      return `No comments found for post ${postId}.`;
-    }
-
-    const comments = response.data.comments.map(comment => ({
+    const comments = (response.data?.comments ?? []).map(comment => ({
       id: comment.id,
-      author: comment.author.name,
-      value: comment.value?.substring(0, 200) + (comment.value && comment.value.length > 200 ? '...' : ''),
-      created: new Date(comment.created).toLocaleDateString(),
-      isInternal: comment.internal || false,
+      value: comment.value,
+      createdAt: comment.created,
+      createdAtLocal: comment.created ? new Date(comment.created).toLocaleString() : undefined,
+      author: {
+        id: comment.author?.id,
+        name: comment.author?.name,
+        email: comment.author?.email,
+        isAdmin: comment.author?.isAdmin ?? false,
+      },
+      internal: comment.internal ?? false,
+      url: comment.url ?? null,
     }));
 
-    return `Found ${comments.length} comment(s) for post ${postId}:\n\n${comments
-      .map((comment, index) => 
-        `${index + 1}. **${comment.author}** (${comment.created})${comment.isInternal ? ' [INTERNAL]' : ''}\n` +
-        `   "${comment.value}"\n`
-      )
-      .join('\n')}${response.data.hasMore ? '\n(More comments available - increase limit or skip to see more)' : ''}`;
+    return buildSuccess({
+      postId,
+      comments,
+      pagination: {
+        hasMore: response.data?.hasMore ?? false,
+        next: (response.data as any)?.next ?? null,
+        skip: skip ?? 0,
+        limit,
+      },
+    });
   },
 };
 
@@ -133,32 +139,37 @@ export const getUsersTool = {
   },
   handler: async (args: unknown, client: CannyClient) => {
     const { limit, skip, search } = validateToolInput<GetUsersInput>(args, GetUsersSchema);
-    
+
     const response = await client.getUsers({ limit, skip, search });
-    
+
     if (response.error) {
-      throw new Error(`Failed to fetch users: ${response.error}`);
+      return buildError('API_ERROR', `Failed to fetch users: ${response.error}`);
     }
 
-    if (!response.data?.users || response.data.users.length === 0) {
-      return 'No users found matching the criteria.';
-    }
-
-    const users = response.data.users.map(user => ({
+    const users = (response.data?.users ?? []).map(user => ({
       id: user.id,
       name: user.name,
-      email: user.email || 'No email',
-      isAdmin: user.isAdmin || false,
-      created: new Date(user.created).toLocaleDateString(),
+      email: user.email ?? null,
+      isAdmin: user.isAdmin ?? false,
+      createdAt: user.created,
+      createdAtLocal: user.created ? new Date(user.created).toLocaleString() : undefined,
+      avatarUrl: user.avatarURL ?? null,
+      userId: user.userID ?? null,
+      url: user.url ?? null,
+      lastSeen: user.lastSeen ?? null,
     }));
 
-    return `Found ${users.length} user(s):\n\n${users
-      .map((user, index) => 
-        `${index + 1}. **${user.name}**${user.isAdmin ? ' [ADMIN]' : ''}\n` +
-        `   Email: ${user.email}\n` +
-        `   Joined: ${user.created}\n`
-      )
-      .join('\n')}${response.data.hasMore ? '\n(More users available - increase limit or skip to see more)' : ''}`;
+    return buildSuccess({
+      users,
+      pagination: {
+        hasMore: response.data?.hasMore ?? false,
+        next: response.data?.next ?? null,
+        skip: skip ?? 0,
+        limit,
+      },
+      total: users.length,
+      search,
+    });
   },
 };
 
@@ -178,28 +189,30 @@ export const getTagsTool = {
   },
   handler: async (args: unknown, client: CannyClient) => {
     const { boardId, limit } = validateToolInput<GetTagsInput>(args, GetTagsSchema);
-    
+
     const response = await client.getTags({ boardId, limit });
-    
+
     if (response.error) {
-      throw new Error(`Failed to fetch tags: ${response.error}`);
+      return buildError('API_ERROR', `Failed to fetch tags: ${response.error}`);
     }
 
-    if (!response.data?.tags || response.data.tags.length === 0) {
-      return boardId ? `No tags found for board ${boardId}.` : 'No tags found.';
-    }
-
-    const tags = response.data.tags.map(tag => ({
+    const tags = (response.data?.tags ?? []).map(tag => ({
       id: tag.id,
       name: tag.name,
-      postCount: tag.postCount || 0,
+      color: tag.color ?? null,
+      postCount: tag.postCount ?? 0,
+      url: tag.url ?? null,
+      createdAt: tag.created ?? null,
     }));
 
-    return `Found ${tags.length} tag(s):\n\n${tags
-      .map(tag => 
-        `**${tag.name}** (ID: ${tag.id})\n` +
-        `  Posts: ${tag.postCount}\n`
-      )
-      .join('\n')}`;
+    return buildSuccess({
+      boardId: boardId ?? null,
+      tags,
+      pagination: {
+        hasMore: response.data?.hasMore ?? false,
+        next: response.data?.next ?? null,
+        limit,
+      },
+    });
   },
 };

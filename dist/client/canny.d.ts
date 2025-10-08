@@ -1,4 +1,4 @@
-import { CannyApiResponse, CannyPost, CannyBoard, CannyCategory, CannyComment, CannyUser, CannyTag } from './types.js';
+import { CannyApiResponse, CannyBoard, CannyCategory, CannyListCommentsResponse, CannyListPostsResponse, CannyListTagsResponse, CannyListUsersResponse, CannyPost } from './types.js';
 /**
  * Canny API Client
  * Implements Customer-Centric approach by providing reliable API access
@@ -25,10 +25,9 @@ export declare class CannyClient {
         status?: string;
         search?: string;
         sort?: 'newest' | 'oldest' | 'relevance' | 'trending';
-    }): Promise<CannyApiResponse<{
-        posts: CannyPost[];
-        hasMore: boolean;
-    }>>;
+        tagIDs?: string[];
+        categoryIDs?: string[];
+    }): Promise<CannyApiResponse<CannyListPostsResponse>>;
     /**
      * Get a specific post by ID
      */
@@ -42,7 +41,7 @@ export declare class CannyClient {
         title: string;
         details?: string;
         categoryID?: string;
-        customFields?: Record<string, any>;
+        customFields?: Record<string, unknown>;
     }): Promise<CannyApiResponse<CannyPost>>;
     /**
      * Update an existing post
@@ -61,10 +60,8 @@ export declare class CannyClient {
         boardIDs?: string[];
         limit?: number;
         status?: string;
-    }): Promise<CannyApiResponse<{
-        posts: CannyPost[];
-        hasMore: boolean;
-    }>>;
+        skip?: number;
+    }): Promise<CannyApiResponse<CannyListPostsResponse>>;
     /**
      * Get categories from a specific board
      */
@@ -75,10 +72,7 @@ export declare class CannyClient {
     getComments(postId: string, options?: {
         limit?: number;
         skip?: number;
-    }): Promise<CannyApiResponse<{
-        comments: CannyComment[];
-        hasMore: boolean;
-    }>>;
+    }): Promise<CannyApiResponse<CannyListCommentsResponse>>;
     /**
      * Get users from your Canny instance
      */
@@ -86,19 +80,13 @@ export declare class CannyClient {
         limit?: number;
         skip?: number;
         search?: string;
-    }): Promise<CannyApiResponse<{
-        users: CannyUser[];
-        hasMore: boolean;
-    }>>;
+    }): Promise<CannyApiResponse<CannyListUsersResponse>>;
     /**
      * Get tags from boards
      */
     getTags(options?: {
         boardId?: string;
         limit?: number;
-    }): Promise<CannyApiResponse<{
-        tags: CannyTag[];
-        hasMore?: boolean;
-    }>>;
+    }): Promise<CannyApiResponse<CannyListTagsResponse>>;
 }
 //# sourceMappingURL=canny.d.ts.map

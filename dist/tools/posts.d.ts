@@ -17,13 +17,11 @@ export declare const getPostsTool: {
                 type: string;
                 minimum: number;
                 maximum: number;
-                default: number;
                 description: string;
             };
             skip: {
                 type: string;
                 minimum: number;
-                default: number;
                 description: string;
             };
             status: {
@@ -39,6 +37,20 @@ export declare const getPostsTool: {
                 type: string;
                 enum: string[];
                 description: string;
+            };
+            tagIds: {
+                type: string;
+                description: string;
+                items: {
+                    type: string;
+                };
+            };
+            categoryIds: {
+                type: string;
+                description: string;
+                items: {
+                    type: string;
+                };
             };
         };
         required: string[];
@@ -97,6 +109,12 @@ export declare const searchPostsTool: {
             status: {
                 type: string;
                 enum: string[];
+                description: string;
+            };
+            skip: {
+                type: string;
+                minimum: number;
+                default: number;
                 description: string;
             };
         };

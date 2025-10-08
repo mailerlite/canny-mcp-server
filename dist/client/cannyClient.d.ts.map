@@ -1,1 +1,0 @@
-{"version":3,"file":"cannyClient.d.ts","sourceRoot":"","sources":["../../src/client/cannyClient.ts"],"names":[],"mappings":"AACA,OAAO,EACL,WAAW,EAgBZ,MAAM,YAAY,CAAC;AAuCpB,qBAAa,WAAW;IACtB,OAAO,CAAC,QAAQ,CAAC,MAAM,CAAgB;IACvC,OAAO,CAAC,QAAQ,CAAC,WAAW,CAAc;IAC1C,OAAO,CAAC,QAAQ,CAAC,MAAM,CAAwB;gBAEnC,MAAM,EAAE,WAAW;IA4B/B,OAAO,CAAC,WAAW;CAyBlB"}

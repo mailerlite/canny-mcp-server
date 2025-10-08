@@ -3,9 +3,9 @@
  * Following CIQ's Excellence principle - validate before shipping
  */
 
-import { CannyClient } from '../src/client/canny';
-import { validateEnvironment } from '../src/utils/validation';
-import { getBoardsTool } from '../src/tools/boards';
+import { CannyClient } from '../src/client/canny.js';
+import { getBoardsTool } from '../src/tools/boards.js';
+import { validateEnvironment } from '../src/utils/validation.js';
 
 // Mock environment for testing
 const mockEnv = {
@@ -32,7 +32,7 @@ describe('Environment Validation', () => {
     const result = validateEnvironment();
     expect(result.isValid).toBe(false);
     expect(result.errors).toContain('Missing required environment variable: CANNY_API_KEY');
-    
+
     // Restore for other tests
     process.env.CANNY_API_KEY = mockEnv.CANNY_API_KEY;
   });
@@ -47,7 +47,7 @@ describe('Canny Client', () => {
 
   test('should handle rate limiting', async () => {
     const client = new CannyClient('test-key');
-    
+
     // This would need proper mocking in a full test suite
     // For now, just ensure the client is properly constructed
     expect(client).toBeDefined();
@@ -59,7 +59,7 @@ describe('Tools', () => {
     expect(getBoardsTool.name).toBe('get_boards');
     expect(getBoardsTool.description).toContain('List all Canny boards');
     expect(getBoardsTool.inputSchema).toBeDefined();
-    expect(getBoardsTool.handler).toBeInstanceOf(Function);
+    expect(typeof getBoardsTool.handler).toBe('function');
   });
 
   test('should validate tool input correctly', () => {
@@ -74,10 +74,10 @@ describe('Integration Tests', () => {
   test.skip('should fetch boards from real API', async () => {
     // This test would require a real API key and should be run separately
     // Skip by default to avoid API calls during regular testing
-    
+
     const client = new CannyClient(process.env.CANNY_API_KEY!);
     const result = await client.getBoards();
-    
+
     expect(result.status).toBe(200);
     expect(result.data).toBeDefined();
   });

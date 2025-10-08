@@ -59,9 +59,10 @@ export class CannyClient {
         }
         catch (error) {
             if (axios.isAxiosError(error)) {
+                const axiosError = error;
                 return {
-                    error: error.response?.data?.error || error.message,
-                    status: error.response?.status || 500,
+                    error: axiosError.response?.data?.error || axiosError.response?.data?.message || axiosError.message,
+                    status: axiosError.response?.status || 500,
                 };
             }
             return {
@@ -75,11 +76,10 @@ export class CannyClient {
      */
     async getBoards() {
         const response = await this.makeRequest({
-            method: 'GET',
+            method: 'POST',
             url: '/boards/list',
         });
-        // Handle the nested response structure
-        if (response.data && response.data.boards) {
+        if (response.data?.boards) {
             return {
                 data: response.data.boards,
                 status: response.status,
@@ -96,15 +96,17 @@ export class CannyClient {
      */
     async getPosts(boardId, options) {
         return this.makeRequest({
-            method: 'GET',
+            method: 'POST',
             url: '/posts/list',
-            params: {
+            data: {
                 boardID: boardId,
-                limit: options?.limit || 10,
-                skip: options?.skip || 0,
-                ...(options?.status && { status: options.status }),
-                ...(options?.search && { search: options.search }),
-                ...(options?.sort && { sort: options.sort }),
+                limit: options?.limit,
+                skip: options?.skip,
+                status: options?.status,
+                search: options?.search,
+                sort: options?.sort,
+                tagIDs: options?.tagIDs,
+                categoryIDs: options?.categoryIDs,
             },
         });
     }
@@ -113,9 +115,9 @@ export class CannyClient {
      */
     async getPost(postId) {
         return this.makeRequest({
-            method: 'GET',
+            method: 'POST',
             url: '/posts/retrieve',
-            params: { id: postId },
+            data: { id: postId },
         });
     }
     /**
@@ -134,7 +136,7 @@ export class CannyClient {
     async updatePost(postId, data) {
         return this.makeRequest({
             method: 'POST',
-            url: '/posts/change_status',
+            url: '/posts/update',
             data: { postID: postId, ...data },
         });
     }
@@ -143,13 +145,14 @@ export class CannyClient {
      */
     async searchPosts(query, options) {
         return this.makeRequest({
-            method: 'GET',
+            method: 'POST',
             url: '/posts/list',
-            params: {
+            data: {
                 search: query,
-                limit: options?.limit || 20,
-                ...(options?.boardIDs && { boardIDs: options.boardIDs.join(',') }),
-                ...(options?.status && { status: options.status }),
+                boardIDs: options?.boardIDs,
+                limit: options?.limit,
+                status: options?.status,
+                skip: options?.skip,
             },
         });
     }
@@ -158,14 +161,13 @@ export class CannyClient {
      */
     async getCategories(boardId) {
         const response = await this.makeRequest({
-            method: 'GET',
+            method: 'POST',
             url: '/categories/list',
-            params: {
+            data: {
                 boardID: boardId,
             },
         });
-        // Handle the nested response structure
-        if (response.data && response.data.categories) {
+        if (response.data?.categories) {
             return {
                 data: response.data.categories,
                 status: response.status,
@@ -182,12 +184,12 @@ export class CannyClient {
      */
     async getComments(postId, options) {
         return this.makeRequest({
-            method: 'GET',
+            method: 'POST',
             url: '/comments/list',
-            params: {
+            data: {
                 postID: postId,
-                limit: options?.limit || 10,
-                skip: options?.skip || 0,
+                limit: options?.limit,
+                skip: options?.skip,
             },
         });
     }
@@ -196,12 +198,12 @@ export class CannyClient {
      */
     async getUsers(options) {
         return this.makeRequest({
-            method: 'GET',
+            method: 'POST',
             url: '/users/list',
-            params: {
-                limit: options?.limit || 10,
-                skip: options?.skip || 0,
-                ...(options?.search && { search: options.search }),
+            data: {
+                limit: options?.limit,
+                skip: options?.skip,
+                search: options?.search,
             },
         });
     }
@@ -210,11 +212,11 @@ export class CannyClient {
      */
     async getTags(options) {
         return this.makeRequest({
-            method: 'GET',
+            method: 'POST',
             url: '/tags/list',
-            params: {
-                limit: options?.limit || 20,
-                ...(options?.boardId && { boardID: options.boardId }),
+            data: {
+                boardID: options?.boardId,
+                limit: options?.limit,
             },
         });
     }

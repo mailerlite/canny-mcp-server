@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { formatDate } from '../utils/helpers.js';
+import { buildError, buildSuccess } from '../utils/response.js';
 import { validateToolInput } from '../utils/validation.js';
 const GetPostsSchema = z.object({
     boardId: z.string().min(1, 'Board ID is required'),
@@ -7,6 +9,8 @@ const GetPostsSchema = z.object({
     status: z.enum(['open', 'under review', 'planned', 'in progress', 'complete', 'closed']).optional(),
     search: z.string().optional(),
     sort: z.enum(['newest', 'oldest', 'relevance', 'trending']).optional(),
+    tagIds: z.array(z.string()).optional(),
+    categoryIds: z.array(z.string()).optional(),
 });
 const GetPostSchema = z.object({
     postId: z.string().min(1, 'Post ID is required'),
@@ -15,6 +19,7 @@ const SearchPostsSchema = z.object({
     query: z.string().min(1, 'Search query is required'),
     boardIds: z.array(z.string()).optional(),
     limit: z.number().min(1).max(50).optional().default(20),
+    skip: z.number().min(0).optional().default(0),
     status: z.enum(['open', 'under review', 'planned', 'in progress', 'complete', 'closed']).optional(),
 });
 const CreatePostSchema = z.object({
@@ -44,8 +49,8 @@ export const getPostsTool = {
         type: 'object',
         properties: {
             boardId: { type: 'string', description: 'ID of the board to fetch posts from' },
-            limit: { type: 'number', minimum: 1, maximum: 50, default: 10, description: 'Number of posts to retrieve' },
-            skip: { type: 'number', minimum: 0, default: 0, description: 'Number of posts to skip for pagination' },
+            limit: { type: 'number', minimum: 1, maximum: 50, description: 'Number of posts to retrieve' },
+            skip: { type: 'number', minimum: 0, description: 'Number of posts to skip for pagination' },
             status: {
                 type: 'string',
                 enum: ['open', 'under review', 'planned', 'in progress', 'complete', 'closed'],
@@ -57,41 +62,104 @@ export const getPostsTool = {
                 enum: ['newest', 'oldest', 'relevance', 'trending'],
                 description: 'Sort order for posts'
             },
+            tagIds: {
+                type: 'array',
+                description: 'Optional tag IDs to filter posts',
+                items: { type: 'string' },
+            },
+            categoryIds: {
+                type: 'array',
+                description: 'Optional category IDs to filter posts',
+                items: { type: 'string' },
+            },
         },
         required: ['boardId'],
         additionalProperties: false,
     },
     handler: async (args, client) => {
-        const { boardId, limit, skip, status, search, sort } = validateToolInput(args, GetPostsSchema);
-        const response = await client.getPosts(boardId, { limit, skip, status, search, sort });
+        const { boardId, limit, skip, status, search, sort, tagIds, categoryIds } = validateToolInput(args, GetPostsSchema);
+        const response = await client.getPosts(boardId, {
+            limit,
+            skip,
+            status,
+            search,
+            sort,
+            tagIDs: tagIds,
+            categoryIDs: categoryIds,
+        });
         if (response.error) {
             throw new Error(`Failed to fetch posts: ${response.error}`);
         }
-        if (!response.data?.posts || response.data.posts.length === 0) {
-            return 'No posts found matching the criteria.';
-        }
-        const posts = response.data.posts.map(post => ({
-            id: post.id,
-            title: post.title,
-            details: post.details?.substring(0, 200) + (post.details && post.details.length > 200 ? '...' : ''),
-            status: post.status,
-            author: post.author.name,
-            votes: post.votes,
-            score: post.score,
-            tags: post.tags.map(tag => tag.name),
-            createdAt: new Date(post.createdAt).toLocaleDateString(),
-            url: post.url,
-        }));
-        return `Found ${posts.length} post(s) in board ${boardId}:\n\n${posts
-            .map((post, index) => `${index + 1}. **${post.title}** (ID: ${post.id})\n` +
-            `   Status: ${post.status} | Votes: ${post.votes} | Score: ${post.score}\n` +
-            `   Author: ${post.author} | Created: ${post.createdAt}\n` +
-            `   Tags: ${post.tags.length > 0 ? post.tags.join(', ') : 'None'}\n` +
-            `   Details: ${post.details || 'No description'}\n` +
-            `   URL: ${post.url}\n`)
-            .join('\n')}${response.data.hasMore ? '\n(More posts available - increase limit or skip to see more)' : ''}`;
+        const posts = (response.data?.posts ?? []).map(normalizePost);
+        return buildSuccess({
+            boardId,
+            posts,
+            pagination: {
+                hasMore: response.data?.hasMore ?? false,
+                next: response.data?.next ?? null,
+                skip: skip ?? 0,
+                limit,
+            },
+        });
     },
 };
+function normalizePost(post) {
+    const createdAt = post.createdAt || post.created;
+    const updatedAt = post.updatedAt || post.updated;
+    const rawVoteCount = typeof post.voteCount === 'number' ? post.voteCount : post.votes ?? 0;
+    return {
+        id: post.id,
+        title: post.title,
+        status: post.status,
+        details: post.details ?? null,
+        votes: rawVoteCount,
+        voteCount: typeof post.voteCount === 'number' ? post.voteCount : post.votes,
+        board: {
+            id: post.board?.id,
+            name: post.board?.name,
+            url: post.board?.url,
+            isPrivate: post.board?.isPrivate,
+            postCount: post.board?.postCount,
+        },
+        author: {
+            id: post.author?.id,
+            name: post.author?.name,
+            email: post.author?.email,
+            url: post.author?.url,
+            userID: post.author?.userID,
+            isAdmin: post.author?.isAdmin,
+        },
+        category: post.category
+            ? {
+                id: post.category.id,
+                name: post.category.name,
+                url: post.category.url,
+            }
+            : null,
+        tags: (post.tags || []).map(tag => ({
+            id: tag.id,
+            name: tag.name,
+            color: tag.color,
+        })),
+        url: post.url,
+        score: post.score,
+        commentCount: post.commentCount,
+        eta: post.eta ?? null,
+        imageURLs: post.imageURLs || [],
+        originURL: post.originURL ?? null,
+        assignedAdmins: (post.assignedAdmins || []).map(admin => ({
+            id: admin.id,
+            name: admin.name,
+            email: admin.email,
+            url: admin.url,
+        })),
+        customFields: post.customFields ?? null,
+        createdAt,
+        createdAtLocal: formatDate(createdAt),
+        updatedAt,
+        updatedAtLocal: formatDate(updatedAt),
+    };
+}
 /**
  * Tool to get a specific post by ID
  * Customer-Centric: Provides complete post details for thorough analysis
@@ -111,24 +179,13 @@ export const getPostTool = {
         const { postId } = validateToolInput(args, GetPostSchema);
         const response = await client.getPost(postId);
         if (response.error) {
-            throw new Error(`Failed to fetch post: ${response.error}`);
+            return buildError('API_ERROR', `Failed to fetch post: ${response.error}`);
         }
         if (!response.data) {
-            return `Post with ID ${postId} not found.`;
+            return buildError('NOT_FOUND', `Post with ID ${postId} not found`);
         }
-        const post = response.data;
-        return `**${post.title}**\n` +
-            `ID: ${post.id}\n` +
-            `Status: ${post.status}\n` +
-            `Author: ${post.author.name} (${post.author.email || 'No email'})\n` +
-            `Board: ${post.board.name}\n` +
-            `Category: ${post.category?.name || 'None'}\n` +
-            `Votes: ${post.votes} | Score: ${post.score}\n` +
-            `Tags: ${post.tags.length > 0 ? post.tags.map(tag => tag.name).join(', ') : 'None'}\n` +
-            `Created: ${new Date(post.createdAt).toLocaleString()}\n` +
-            `Updated: ${new Date(post.updatedAt).toLocaleString()}\n` +
-            `URL: ${post.url}\n\n` +
-            `**Details:**\n${post.details || 'No description provided'}`;
+        const post = normalizePost(response.data);
+        return buildSuccess(post);
     },
 };
 /**
@@ -153,37 +210,28 @@ export const searchPostsTool = {
                 enum: ['open', 'under review', 'planned', 'in progress', 'complete', 'closed'],
                 description: 'Filter by post status'
             },
+            skip: { type: 'number', minimum: 0, default: 0, description: 'Number of posts to skip for pagination' },
         },
         required: ['query'],
         additionalProperties: false,
     },
     handler: async (args, client) => {
-        const { query, boardIds, limit, status } = validateToolInput(args, SearchPostsSchema);
-        const response = await client.searchPosts(query, { boardIDs: boardIds, limit, status });
+        const { query, boardIds, limit, status, skip } = validateToolInput(args, SearchPostsSchema);
+        const response = await client.searchPosts(query, { boardIDs: boardIds, limit, status, skip });
         if (response.error) {
-            throw new Error(`Failed to search posts: ${response.error}`);
+            return buildError('API_ERROR', `Failed to search posts: ${response.error}`);
         }
-        if (!response.data?.posts || response.data.posts.length === 0) {
-            return `No posts found matching query: "${query}"`;
-        }
-        const posts = response.data.posts.map(post => ({
-            id: post.id,
-            title: post.title,
-            board: post.board.name,
-            status: post.status,
-            author: post.author.name,
-            votes: post.votes,
-            score: post.score,
-            createdAt: new Date(post.createdAt).toLocaleDateString(),
-            url: post.url,
-        }));
-        return `Found ${posts.length} post(s) matching "${query}":\n\n${posts
-            .map((post, index) => `${index + 1}. **${post.title}** (ID: ${post.id})\n` +
-            `   Board: ${post.board} | Status: ${post.status}\n` +
-            `   Votes: ${post.votes} | Score: ${post.score}\n` +
-            `   Author: ${post.author} | Created: ${post.createdAt}\n` +
-            `   URL: ${post.url}\n`)
-            .join('\n')}${response.data.hasMore ? '\n(More results available - increase limit to see more)' : ''}`;
+        const posts = (response.data?.posts ?? []).map(normalizePost);
+        return buildSuccess({
+            query,
+            posts,
+            pagination: {
+                hasMore: response.data?.hasMore ?? false,
+                next: response.data?.next ?? null,
+                skip: skip ?? 0,
+                limit,
+            },
+        });
     },
 };
 /**
@@ -221,19 +269,16 @@ export const createPostTool = {
             customFields,
         });
         if (response.error) {
-            throw new Error(`Failed to create post: ${response.error}`);
+            return buildError('API_ERROR', `Failed to create post: ${response.error}`);
         }
         if (!response.data) {
-            return 'Post creation failed - no data returned';
+            return buildError('EMPTY_RESPONSE', 'Post creation failed - no data returned');
         }
-        const post = response.data;
-        return `Successfully created post!\n\n` +
-            `**${post.title}** (ID: ${post.id})\n` +
-            `Board: ${post.board.name}\n` +
-            `Author: ${post.author.name}\n` +
-            `Status: ${post.status}\n` +
-            `Created: ${new Date(post.createdAt).toLocaleString()}\n` +
-            `URL: ${post.url}`;
+        const post = normalizePost(response.data);
+        return buildSuccess({
+            message: 'Post created successfully',
+            post,
+        });
     },
 };
 /**
@@ -274,17 +319,16 @@ export const updatePostTool = {
             status,
         });
         if (response.error) {
-            throw new Error(`Failed to update post: ${response.error}`);
+            return buildError('API_ERROR', `Failed to update post: ${response.error}`);
         }
         if (!response.data) {
-            return 'Post update failed - no data returned';
+            return buildError('EMPTY_RESPONSE', 'Post update failed - no data returned');
         }
-        const post = response.data;
-        return `Successfully updated post!\n\n` +
-            `**${post.title}** (ID: ${post.id})\n` +
-            `Status: ${post.status}\n` +
-            `Updated: ${new Date(post.updatedAt).toLocaleString()}\n` +
-            `URL: ${post.url}`;
+        const post = normalizePost(response.data);
+        return buildSuccess({
+            message: 'Post updated successfully',
+            post,
+        });
     },
 };
 //# sourceMappingURL=posts.js.map

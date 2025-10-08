@@ -3,32 +3,14 @@
  * Following CIQ's Efficient principle - maximize existing resources
  */
 export function formatDate(dateString) {
-    try {
-        return new Date(dateString).toLocaleString();
+    if (!dateString) {
+        return undefined;
     }
-    catch {
-        return dateString;
+    const parsed = new Date(dateString);
+    if (Number.isNaN(parsed.getTime())) {
+        return dateString ?? undefined;
     }
-}
-export function truncateText(text, maxLength = 200) {
-    if (!text)
-        return '';
-    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
-}
-export function formatPostStatus(status) {
-    // Capitalize and format status for better readability
-    return status
-        .split(' ')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-}
-export function formatPostSummary(post) {
-    return `**${post.title}** (ID: ${post.id})\n` +
-        `Status: ${formatPostStatus(post.status)} | Votes: ${post.votes}\n` +
-        `Author: ${post.author?.name || 'Unknown'}\n` +
-        `Created: ${formatDate(post.createdAt)}\n` +
-        `${post.details ? `Details: ${truncateText(post.details)}\n` : ''}` +
-        `URL: ${post.url}`;
+    return parsed.toLocaleString();
 }
 export function validateBoardId(boardId) {
     return typeof boardId === 'string' && boardId.trim().length > 0;

@@ -1,19 +1,18 @@
 import { CannyClient } from '../client/canny.js';
 import { getBoardsTool } from './boards.js';
-import { 
-  getPostsTool, 
-  getPostTool, 
-  searchPostsTool, 
-  createPostTool, 
-  updatePostTool 
+import {
+  getCategoresTool,
+  getCommentsTool,
+  getTagsTool,
+  getUsersTool,
+} from './extended.js';
+import {
+  createPostTool,
+  getPostsTool,
+  getPostTool,
+  searchPostsTool,
+  updatePostTool,
 } from './posts.js';
-// Temporarily comment out extended tools to debug
-// import {
-//   getCategoresTool,
-//   getCommentsTool,
-//   getUsersTool,
-//   getTagsTool,
-// } from './extended.js';
 
 export interface Tool {
   name: string;
@@ -29,7 +28,7 @@ export interface Tool {
 export const tools: Tool[] = [
   // Board management
   getBoardsTool,
-  
+
   // Post management
   getPostsTool,
   getPostTool,
@@ -37,23 +36,17 @@ export const tools: Tool[] = [
   createPostTool,
   updatePostTool,
 
-  // Extended functionality - temporarily disabled for debugging
-  // getCategoresTool,
-  // getCommentsTool,
-  // getUsersTool,
-  // getTagsTool,
+  // Extended functionality
+  getCategoresTool,
+  getCommentsTool,
+  getUsersTool,
+  getTagsTool,
 ];
 
 // Export individual tools for testing
 export {
-  getBoardsTool,
-  getPostsTool,
-  getPostTool,
-  searchPostsTool,
-  createPostTool,
-  updatePostTool,
-  // getCategoresTool,
-  // getCommentsTool,
-  // getUsersTool,
-  // getTagsTool,
+  createPostTool, getBoardsTool, getCategoresTool,
+  getCommentsTool, getPostsTool,
+  getPostTool, getTagsTool, getUsersTool, searchPostsTool, updatePostTool
 };
+

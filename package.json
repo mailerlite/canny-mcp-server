@@ -1,6 +1,6 @@
 {
   "name": "@mailerlite/canny-mcp-server",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "type": "module",
   "description": "MCP server integration for Canny.io customer feedback management",
   "main": "dist/server.js",

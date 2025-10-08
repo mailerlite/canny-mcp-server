@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { CannyClient } from '../client/canny.js';
+import { formatDate } from '../utils/helpers.js';
+import { buildError, buildSuccess } from '../utils/response.js';
 import { validateToolInput } from '../utils/validation.js';
 
 const GetBoardsSchema = z.object({});
@@ -19,32 +21,27 @@ export const getBoardsTool = {
   },
   handler: async (args: unknown, client: CannyClient) => {
     validateToolInput<GetBoardsInput>(args, GetBoardsSchema);
-    
+
     const response = await client.getBoards();
-    
+
     if (response.error) {
-      throw new Error(`Failed to fetch boards: ${response.error}`);
+      return buildError('API_ERROR', `Failed to fetch boards: ${response.error}`);
     }
 
-    if (!response.data || response.data.length === 0) {
-      return 'No boards found or you do not have access to any boards.';
-    }
-
-    const boards = response.data.map(board => ({
+    const boards = (response.data ?? []).map(board => ({
       id: board.id,
       name: board.name,
       url: board.url,
-      postCount: board.postCount,
-      isPrivate: board.isPrivate,
+      isPrivate: board.isPrivate ?? false,
+      postCount: board.postCount ?? 0,
+      privateComments: board.privateComments ?? false,
+      createdAt: board.created ?? null,
+      createdAtLocal: board.created ? formatDate(board.created) : undefined,
     }));
 
-    return `Found ${boards.length} board(s):\n\n${boards
-      .map(board => 
-        `**${board.name}** (ID: ${board.id})\n` +
-        `  - URL: ${board.url}\n` +
-        `  - Posts: ${board.postCount}\n` +
-        `  - Private: ${board.isPrivate ? 'Yes' : 'No'}\n`
-      )
-      .join('\n')}`;
+    return buildSuccess({
+      boards,
+      count: boards.length,
+    });
   },
 };

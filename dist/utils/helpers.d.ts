@@ -2,10 +2,7 @@
  * Utility functions for the Canny MCP Server
  * Following CIQ's Efficient principle - maximize existing resources
  */
-export declare function formatDate(dateString: string): string;
-export declare function truncateText(text: string, maxLength?: number): string;
-export declare function formatPostStatus(status: string): string;
-export declare function formatPostSummary(post: any): string;
+export declare function formatDate(dateString?: string | null): string | undefined;
 export declare function validateBoardId(boardId: string): boolean;
 export declare function validatePostId(postId: string): boolean;
 export declare class CannyError extends Error {
