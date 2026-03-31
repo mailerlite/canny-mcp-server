@@ -3,6 +3,10 @@
   "version": "2.1.0",
   "type": "module",
   "description": "MCP server integration for Canny.io customer feedback management",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mailerlite/canny-mcp-server.git"
+  },
   "main": "dist/server.js",
   "bin": {
     "canny-mcp-server": "./dist/server.js"
