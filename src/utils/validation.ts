@@ -55,6 +55,6 @@ export function validateToolInput<T>(input: unknown, schema: any): T {
   try {
     return schema.parse(input) as T;
   } catch (error) {
-    throw new Error(`Invalid input parameters: ${error instanceof Error ? error.message : 'Unknown validation error'}`);
+    throw new Error(`Invalid input parameters: ${error instanceof Error ? error.message : 'Unknown validation error'}`, { cause: error });
   }
 }
