@@ -42,7 +42,7 @@ export function validateToolInput(input, schema) {
         return schema.parse(input);
     }
     catch (error) {
-        throw new Error(`Invalid input parameters: ${error instanceof Error ? error.message : 'Unknown validation error'}`);
+        throw new Error(`Invalid input parameters: ${error instanceof Error ? error.message : 'Unknown validation error'}`, { cause: error });
     }
 }
 //# sourceMappingURL=validation.js.map
