@@ -75,3 +75,4 @@ temp/
 
 # docs
 PROJECT_COMPLETE.md
+.direnv/
